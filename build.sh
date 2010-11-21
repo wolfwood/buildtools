@@ -1,4 +1,4 @@
-OSNAME=myos
+OSNAME=linux
 
 BINUTILS_VER=2.20
 GCC_VER=4.5.0
@@ -11,9 +11,9 @@ export TARGET=x86_64-pc-${OSNAME}
 export PREFIX=`pwd`/local
 
 # Fix patches with osname
-PERLCMD="s/{{OSNAME}}/${OSNAME}/g"
-perl -pi -e $PERLCMD *.patch
-perl -pi -e $PERLCMD gcc-files/gcc/config/os.h
+#PERLCMD="s/{{OSNAME}}/${OSNAME}/g"
+#perl -pi -e $PERLCMD *.patch
+#perl -pi -e $PERLCMD gcc-files/gcc/config/os.h
 
 mkdir -p build
 mkdir -p local
@@ -55,19 +55,19 @@ tar -xf newlib-${NEWLIB_VER}.tar.gz
 
 # Patch and push new code into each package
 
-echo "PATCH BINUTILS"
-patch -p0 -d binutils-${BINUTILS_VER} < ../binutils.patch || exit
-cp ../binutils-files/ld/emulparams/os_x86_64.sh binutils-${BINUTILS_VER}/ld/emulparams/${OSNAME}_x86_64.sh
+#echo "PATCH BINUTILS"
+#patch -p0 -d binutils-${BINUTILS_VER} < ../binutils.patch || exit
+#cp ../binutils-files/ld/emulparams/os_x86_64.sh binutils-${BINUTILS_VER}/ld/emulparams/${OSNAME}_x86_64.sh
 
-echo "PATCH GCC"
-patch -p0 -d gcc-${GCC_VER} < ../gcc.patch || exit
-cp ../gcc-files/gcc/config/os.h gcc-${GCC_VER}/gcc/config/${OSNAME}.h
+#echo "PATCH GCC"
+#patch -p0 -d gcc-${GCC_VER} < ../gcc.patch || exit
+#cp ../gcc-files/gcc/config/os.h gcc-${GCC_VER}/gcc/config/${OSNAME}.h
 
-echo "PATCH NEWLIB"
-patch -p0 -d newlib-${NEWLIB_VER} < ../newlib.patch || exit
-mkdir -p newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}
-cp -r ../newlib-files/* newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}/.
-cp ../newlib-files/vanilla-syscalls.c newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}/syscalls.c
+#echo "PATCH NEWLIB"
+#patch -p0 -d newlib-${NEWLIB_VER} < ../newlib.patch || exit
+#mkdir -p newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}
+#cp -r ../newlib-files/* newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}/.
+#cp ../newlib-files/vanilla-syscalls.c newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}/syscalls.c
 
 echo "MAKE OBJECT DIRECTORIES"
 mkdir -p binutils-obj
@@ -118,7 +118,7 @@ cd ../..
 
 echo "COMPILE GCC"
 cd gcc-obj
-../gcc-${GCC_VER}/configure --target=$TARGET --prefix=$PREFIX --enable-languages=c,c++,fortran --disable-libssp --with-gmp=$PREFIX --with-mpfr=$PREFIX --with-mpc=$PREFIX --disable-nls --with-newlib || exit
+../gcc-${GCC_VER}/configure --target=$TARGET --prefix=$PREFIX --enable-languages=c,fortran --disable-libssp --with-gmp=$PREFIX --with-mpfr=$PREFIX --with-mpc=$PREFIX --disable-nls --with-newlib || exit
 
 make all-gcc || exit
 make install-gcc || exit
@@ -142,19 +142,10 @@ cd ..
 
 echo "PASS-2 COMPILE GCC"
 cd gcc-obj
-#make all-target-libgcc
-#make install-target-libgcc
-make all-target-libstdc++-v3 || exit
-make install-target-libstdc++-v3 || exit
-make || exit
-make install || exit
-cd ..
-
-echo "PASS-2 COMPILE NEWLIB"
-cp ../newlib-files/syscalls.c newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}/syscalls.c
-
-cd newlib-obj
-#../newlib-${NEWLIB_VER}/configure --target=$TARGET --prefix=$PREFIX --with-gmp=$PREFIX --with-mpfr=$PREFIX || exit
+##make all-target-libgcc
+##make install-target-libgcc
+#make all-target-libstdc++-v3 || exit
+#make install-target-libstdc++-v3 || exit
 make || exit
 make install || exit
 cd ..
