@@ -8,6 +8,8 @@ MPFR_VER=3.0.1
 NEWLIB_VER=1.19.0
 MPC_VER=0.9
 
+GDC_VER=src
+
 export TARGET=x86_64-pc-${OSNAME}
 export PREFIX=`pwd`/local
 
@@ -54,6 +56,13 @@ echo "FETCH NEWLIB"
 wget $WFLAGS ftp://sources.redhat.com/pub/newlib/newlib-${NEWLIB_VER}.tar.gz
 tar -xf newlib-${NEWLIB_VER}.tar.gz
 
+echo "FETCH GDC"
+if [ ${GDC_VER} == "src" ]; then
+		hg clone https://goshawk@bitbucket.org/goshawk/gdc build/gdc-${GDC_VER}
+else
+		echo "we can only fetch GDC from source"; exit
+fi
+
 # Patch and push new code into each package
 
 echo "PATCH BINUTILS"
@@ -64,6 +73,12 @@ echo "PATCH GCC"
 patch -p0 -d gcc-${GCC_VER} < ../gcc.patch || exit
 cp ../gcc-files/gcc/config/os.h gcc-${GCC_VER}/gcc/config/${OSNAME}.h
 
+echo "PATCH GDC/GCC"
+ln -s ../..//gdc-${GDC_VER}/d build/gcc-${GCC_VER}/gcc/d
+cd ./build/gcc-${GCC_VER}
+./gcc/d/setup-gcc.sh
+cd ../..
+
 echo "PATCH NEWLIB"
 patch -p0 -d newlib-${NEWLIB_VER} < ../newlib.patch || exit
 mkdir -p newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}
@@ -73,6 +88,7 @@ cp ../newlib-files/vanilla-syscalls.c newlib-${NEWLIB_VER}/newlib/libc/sys/${OSN
 echo "MAKE OBJECT DIRECTORIES"
 mkdir -p binutils-obj
 mkdir -p gcc-obj
+mkdir -p gdc-obj
 mkdir -p newlib-obj
 mkdir -p gmp-obj
 mkdir -p mpfr-obj
@@ -119,7 +135,7 @@ cd ../..
 
 echo "COMPILE GCC"
 cd gcc-obj
-../gcc-${GCC_VER}/configure --target=$TARGET --prefix=$PREFIX --enable-languages=c,c++ --disable-libssp --with-gmp=$PREFIX --with-mpfr=$PREFIX --with-mpc=$PREFIX --disable-nls --with-newlib || exit
+../gcc-${GCC_VER}/configure --target=$TARGET --prefix=$PREFIX --enable-languages=c,c++,d --disable-libssp --with-gmp=$PREFIX --with-mpfr=$PREFIX --with-mpc=$PREFIX --disable-nls --with-newlib || exit
 make -j$NCPU all-gcc || exit
 make install-gcc || exit
 cd ..
@@ -158,3 +174,5 @@ cd newlib-obj
 make || exit
 make install || exit
 cd ..
+
+
