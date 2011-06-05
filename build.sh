@@ -2,30 +2,32 @@ OSNAME=xomb
 NCPU=4
 
 BINUTILS_VER=2.21
-GCC_VER=4.6.0
+GCC_VER=4.5.3
 GMP_VER=5.0.2
 MPFR_VER=3.0.1
 NEWLIB_VER=1.19.0
 MPC_VER=0.9
+CLOOG_VER=0.16.1
+PPL_VER=0.11.2
 
 GDC_VER=src
 
 export TARGET=x86_64-pc-${OSNAME}
 export PREFIX=`pwd`/local
-
 # Fix patches with osname
 #PERLCMD="s/{{OSNAME}}/${OSNAME}/g"
 #perl -pi -e $PERLCMD *.patch
 #perl -pi -e $PERLCMD gcc-files/gcc/config/os.h
 
-mkdir -p build
+mkdir -p build #&& rm -rf build/*/ local
 mkdir -p local
 cd build
 
 WFLAGS=-c
 
 export PATH=$PREFIX/bin:$PATH
-
+export LD_RUN_PATH=${PREFIX}/lib:${LD_RUN_PATH}
+export LD_LIBRARY_PATH=${PREFIX}/lib:${LD_LIBRARY_PATH}
 # Fetch each package
 
 echo "FETCH BINUTILS"
@@ -53,12 +55,27 @@ wget $WFLAGS http://www.multiprecision.org/mpc/download/mpc-${MPC_VER}.tar.gz
 tar -xf mpc-${MPC_VER}.tar.gz
 
 echo "FETCH NEWLIB"
-wget $WFLAGS ftp://sources.redhat.com/pub/newlib/newlib-${NEWLIB_VER}.tar.gz
+#wget $WFLAGS ftp://sources.redhat.com/pub/newlib/newlib-${NEWLIB_VER}.tar.gz
 tar -xf newlib-${NEWLIB_VER}.tar.gz
+
+echo "FETCH PPL"
+wget $WFLAGS ftp://ftp.cs.unipr.it/pub/ppl/releases/${PPL_VER}/ppl-${PPL_VER}.tar.gz
+tar -xf ppl-${PPL_VER}.tar.gz
+
+echo "FETCH CLOOG-PPL"
+wget $WFLAGS http://www.bastoul.net/cloog/pages/download/count.php3?url=./cloog-parma-${CLOOG_VER}.tar.gz
+tar -xf count.php3?url=.%2Fcloog-parma-${CLOOG_VER}.tar.gz
 
 echo "FETCH GDC"
 if [ ${GDC_VER} == "src" ]; then
-		hg clone https://goshawk@bitbucket.org/goshawk/gdc build/gdc-${GDC_VER}
+	if [ -e gdc-src ]; then
+		cd gdc-src
+		hg pull
+		hg update
+		cd ..
+	else
+		hg clone https://goshawk@bitbucket.org/goshawk/gdc gdc-${GDC_VER}
+	fi
 else
 		echo "we can only fetch GDC from source"; exit
 fi
@@ -74,16 +91,17 @@ patch -p0 -d gcc-${GCC_VER} < ../gcc.patch || exit
 cp ../gcc-files/gcc/config/os.h gcc-${GCC_VER}/gcc/config/${OSNAME}.h
 
 echo "PATCH GDC/GCC"
-ln -s ../..//gdc-${GDC_VER}/d build/gcc-${GCC_VER}/gcc/d
-cd ./build/gcc-${GCC_VER}
+ln -s ../../gdc-${GDC_VER}/d gcc-${GCC_VER}/gcc/d
+cd gcc-${GCC_VER}
 ./gcc/d/setup-gcc.sh
-cd ../..
+cd ..
 
 echo "PATCH NEWLIB"
 patch -p0 -d newlib-${NEWLIB_VER} < ../newlib.patch || exit
 mkdir -p newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}
 cp -r ../newlib-files/* newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}/.
 cp ../newlib-files/vanilla-syscalls.c newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}/syscalls.c
+cp ../newlib-files/vanilla-crt0.c newlib-${NEWLIB_VER}/newlib/libc/sys/${OSNAME}/crt0.c
 
 echo "MAKE OBJECT DIRECTORIES"
 mkdir -p binutils-obj
@@ -93,21 +111,32 @@ mkdir -p newlib-obj
 mkdir -p gmp-obj
 mkdir -p mpfr-obj
 mkdir -p mpc-obj
+mkdir -p cloog-parma-obj
+mkdir -p ppl-obj
 
 # Compile all packages
 
-echo "COMPILE BINUTILS"
-cd binutils-obj
-../binutils-${BINUTILS_VER}/configure --target=$TARGET --prefix=$PREFIX --disable-werror || exit
-make -j$NCPU|| exit
+echo "COMPILE GMP"
+cd gmp-obj
+../gmp-${GMP_VER}/configure --prefix=$PREFIX --disable-shared --enable-cxx || exit
+make -j$NCPU || exit
+#make check || exit
 make install || exit
 cd ..
 
-echo "COMPILE GMP"
-cd gmp-obj
-../gmp-${GMP_VER}/configure --prefix=$PREFIX --disable-shared || exit
+echo "COMPILE PPL"
+cd ppl-obj
+../ppl-${PPL_VER}/configure --target=$TARGET --prefix=$PREFIX --with-gmp-prefix=$PREFIX --disable-shared || exit
 make -j$NCPU || exit
-make check || exit
+#make check || exit
+make install || exit
+cd ..
+
+echo "COMPILE CLOOG-PARMA"
+cd cloog-parma-obj
+../cloog-parma-${CLOOG_VER}/configure --target=$TARGET --prefix=$PREFIX --with-gmp=$PREFIX --with-mpfr=$PREFIX --with-ppl=$PREFIX --disable-shared || exit
+make -j$NCPU || exit
+#make check || exit
 make install || exit
 cd ..
 
@@ -127,6 +156,12 @@ make check || exit
 make install || exit
 cd ..
 
+echo "COMPILE BINUTILS"
+cd binutils-obj
+../binutils-${BINUTILS_VER}/configure --target=$TARGET --prefix=$PREFIX --disable-werror || exit
+make -j$NCPU|| exit
+make install || exit
+cd ..
 
 echo "AUTOCONF GCC"
 cd gcc-${GCC_VER}/libstdc++-v3
@@ -135,7 +170,7 @@ cd ../..
 
 echo "COMPILE GCC"
 cd gcc-obj
-../gcc-${GCC_VER}/configure --target=$TARGET --prefix=$PREFIX --enable-languages=c,c++,d --disable-libssp --with-gmp=$PREFIX --with-mpfr=$PREFIX --with-mpc=$PREFIX --disable-nls --with-newlib || exit
+../gcc-${GCC_VER}/configure --target=$TARGET --prefix=$PREFIX --enable-languages=c,c++,d --disable-libssp --with-gmp=$PREFIX --with-mpfr=$PREFIX --with-mpc=$PREFIX --with-ppl=$PREFIX --with-cloog=$PREFIX --disable-nls --with-newlib --enable-checking=release --disable-shared --enable-unix || exit
 make -j$NCPU all-gcc || exit
 make install-gcc || exit
 cd ..
@@ -174,5 +209,3 @@ cd newlib-obj
 make || exit
 make install || exit
 cd ..
-
-
