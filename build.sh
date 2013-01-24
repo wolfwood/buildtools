@@ -27,6 +27,9 @@ mkdir -p gmp-obj
 mkdir -p mpfr-obj
 mkdir -p mpc-obj
 
+mkdir -p autoconf-obj
+mkdir -p automake-obj
+
 
 # --- Fetch and extract each package ---
 source ../scripts/fetchandpatch.sh
@@ -84,6 +87,26 @@ cd gcc-obj
 make -j$NCPU all-gcc || exit
 make install-gcc || exit
 cd ..
+
+setphase "COMPILE AUTOCONF"
+cd autoconf-obj
+../autoconf-${AUTOCONF_VER}/configure --prefix=$PREFIX || exit
+make -j$NCPU all || exit
+make install || exit
+cd ..
+
+setphase "COMPILE AUTOMAKE"
+cd automake-obj
+../automake-${AUTOMAKE_VER}/configure --prefix=$PREFIX || exit
+make -j$NCPU all || exit
+make install || exit
+cd ..
+
+cd ../local/share
+ln -s aclocal-1.11 aclocal
+cd ../../build
+
+hash -r
 
 setphase "AUTOCONF NEWLIB-XOMB"
 cd newlib-${NEWLIB_VER}/newlib/libc/sys

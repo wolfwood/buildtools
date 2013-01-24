@@ -5,12 +5,8 @@ wget $WFLAGS http://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VER}.tar.bz2
 tar -xf binutils-${BINUTILS_VER}.tar.bz2
 
 setphase "FETCH GCC"
-wget $WFLAGS http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-core-${GCC_VER}.tar.gz
-tar -xf gcc-core-${GCC_VER}.tar.gz
-wget $WFLAGS http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-g++-${GCC_VER}.tar.gz
-tar -xf gcc-g++-${GCC_VER}.tar.gz
-wget $WFLAGS http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-fortran-${GCC_VER}.tar.gz
-tar -xf gcc-fortran-${GCC_VER}.tar.gz
+wget $WFLAGS http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-${GCC_VER}.tar.gz
+tar -xf gcc-${GCC_VER}.tar.gz
 
 setphase "FETCH GMP"
 wget $WFLAGS http://ftp.gnu.org/gnu/gmp/gmp-${GMP_VER}.tar.gz
@@ -25,7 +21,7 @@ wget $WFLAGS http://www.multiprecision.org/mpc/download/mpc-${MPC_VER}.tar.gz
 tar -xf mpc-${MPC_VER}.tar.gz
 
 setphase "FETCH NEWLIB"
-wget $WFLAGS ftp://sources.redhat.com/pub/newlib/newlib-${NEWLIB_VER}.tar.gz
+wget $WFLAGS  ftp://sourceware.org/pub/newlib/newlib-${NEWLIB_VER}.tar.gz
 tar -xf newlib-${NEWLIB_VER}.tar.gz
 
 if [ $EXTRAS -eq 1 ]; then
@@ -37,6 +33,15 @@ setphase "FETCH CLooG"
 wget $WFLAGS http://www.bastoul.net/cloog/pages/download/count.php3?url=./cloog-${CLOOG_VER}.tar.gz -O cloog-${CLOOG_VER}.tar.gz
 tar -xf cloog-${CLOOG_VER}.tar.gz
 fi
+
+setphase "FETCH AUTOCONF"
+wget $WFLAGS ftp://ftp.gnu.org/gnu/autoconf/autoconf-${AUTOCONF_VER}.tar.gz -O autoconf-${AUTOCONF_VER}.tar.gz
+tar -xf autoconf-${AUTOCONF_VER}.tar.gz
+
+setphase "FETCH AUTOMAKE"
+wget $WFLAGS ftp://ftp.gnu.org/gnu/automake/automake-${AUTOMAKE_VER}.tar.gz -O automake-${AUTOMAKE_VER}.tar.gz
+tar -xf automake-${AUTOMAKE_VER}.tar.gz
+
 
 # --- Patch and push new code into each package ---
 

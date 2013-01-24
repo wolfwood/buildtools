@@ -6,6 +6,3 @@
     builtin_assert ("system=xomb");   \
     builtin_assert ("system=unix");   \
   } while(0);
-
-#undef TARGET_VERSION
-#define TARGET_VERSION fprintf(stderr, " (x86_64 xomb)");

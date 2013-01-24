@@ -29,6 +29,6 @@
 + posix_dir=posix
 +	sys_dir=xomb
 +	;;
-   xscale-*-*)
- 	sys_dir=arm
- 	if [ "x${newlib_may_supply_syscalls}" = "xno" ] ; then
+   z8k-*-coff)
+ 	sys_dir=z8ksim
+ 	;;
