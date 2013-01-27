@@ -9,8 +9,9 @@ wget $WFLAGS http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-${GCC_VER}.tar.gz
 tar -xf gcc-${GCC_VER}.tar.gz
 
 setphase "FETCH GMP"
-wget $WFLAGS http://ftp.gnu.org/gnu/gmp/gmp-${GMP_VER}.tar.gz
-tar -xf gmp-${GMP_VER}.tar.gz
+
+wget $WFLAGS ftp://ftp.gmplib.org/pub/gmp-${GMP_VER}/gmp-${GMP_VER}.tar.bz2
+tar -xf gmp-${GMP_VER}.tar.bz2
 
 setphase "FETCH MPFR"
 wget $WFLAGS http://ftp.gnu.org/gnu/mpfr/mpfr-${MPFR_VER}.tar.gz
@@ -53,7 +54,9 @@ tar -xf automake-${AUTOMAKE_VER}.tar.gz
 # diff -rupN
 
 
-doPatch binutils
+#doPatch binutils
+setphase "PATCH BINUTILS"
+patch -p1 -d binutils-${BINUTILS_VER} < ../patches/binutils.patch
 cp ../binutils-files/ld/emulparams/os_x86_64.sh binutils-${BINUTILS_VER}/ld/emulparams/${OSNAME}_x86_64.sh
 
 setphase "PATCH GMP"
