@@ -5,6 +5,8 @@ source scripts/functions.sh
 
 source scripts/nativevars.sh
 
+# --- idk why newlib doesn't install header files that live in sub-directories ---
+cp -r newlib-files/asm local/x86_64-pc-xomb/include/
 
 # --- Directory creation ---
 
