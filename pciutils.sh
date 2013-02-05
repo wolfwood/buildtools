@@ -40,3 +40,9 @@ setphase "INSTALL PCIUTILS"
 make install $FLAGS LDFLAGS="${LDFLAGS}" || exit
 make install-lib $FLAGS LDFLAGS="${LDFLAGS}" || exit
 cd ..
+
+XOMB_PREFIX=../../xomb
+
+cp $PREFIX/sbin/lspci $XOMB_PREFIX/build/root/binaries
+mkdir -p ../xomb/build/root/data
+cp $PREFIX/share/pci.ids $XOMB_PREFIX/build/root/data
